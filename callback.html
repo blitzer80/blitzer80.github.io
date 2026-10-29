@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>Connexion Tesla</title>
+  <style>
+    body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: #0b1020; color: #f2f4f8;
+           font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+    .carte { max-width: 520px; padding: 32px; border-radius: 24px; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.1); }
+    h1 { font-size: 22px; margin: 0 0 12px; }
+    p { color: rgba(242,244,248,.7); line-height: 1.5; }
+    code { display: block; word-break: break-all; padding: 12px; border-radius: 12px; background: rgba(0,0,0,.35); font-size: 13px; }
+    button { margin-top: 12px; padding: 12px 18px; border: 0; border-radius: 12px; background: #ff5c5c; color: #fff; font-weight: 600; font-size: 15px; }
+  </style>
+</head>
+<body>
+  <div class="carte">
+    <h1 id="titre">Connexion Tesla…</h1>
+    <p id="texte">Redirection vers le tableau de bord de la maison.</p>
+    <div id="code-zone" hidden>
+      <code id="code"></code>
+      <button id="copier">Copier le code</button>
+    </div>
+  </div>
+  <script>
+    // Tesla renvoie ici ?code=…&state=… après la connexion.
+    // On transmet le code au tableau de bord du NAS (réseau local), qui l'échange contre un jeton.
+    const TABLEAU_DE_BORD = "http://192.168.1.138:8086/tesla/retour";
+
+    const params = new URLSearchParams(location.search);
+    const code = params.get("code");
+    const erreur = params.get("error");
+
+    if (erreur) {
+      document.getElementById("titre").textContent = "Connexion refusée";
+      document.getElementById("texte").textContent = params.get("error_description") || erreur;
+    } else if (code) {
+      document.getElementById("code").textContent = code;
+      document.getElementById("copier").onclick = () => navigator.clipboard.writeText(code);
+      // Si la redirection échoue (hors du réseau de la maison), le code reste affiché pour un copier-coller
+      setTimeout(() => {
+        document.getElementById("titre").textContent = "Code reçu";
+        document.getElementById("texte").textContent = "Si le tableau de bord ne s'est pas ouvert, copie ce code (il expire en quelques minutes).";
+        document.getElementById("code-zone").hidden = false;
+      }, 3000);
+      location.href = TABLEAU_DE_BORD + location.search;
+    } else {
+      document.getElementById("titre").textContent = "Dashboard Maison";
+      document.getElementById("texte").textContent = "Page de retour de connexion Tesla.";
+    }
+  </script>
+</body>
+</html>
